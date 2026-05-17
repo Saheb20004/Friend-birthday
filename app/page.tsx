@@ -2,14 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 const birthdayDate = new Date('2026-05-18T00:00:00').getTime();
 
+const DEFAULT_MESSAGES: { name: string; message: string }[] = [];
+
 export default function Home() {
+  const router = useRouter();
   const [days, setDays] = useState(0);
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
   const [seconds, setSeconds] = useState(0);
+  const [name, setName] = useState('');
+  const [wish, setWish] = useState('');
+  const [messages, setMessages] = useState<{ name: string; message: string }[]>([]);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
+  const MAX = 200;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -30,6 +40,27 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
+  // Load saved messages from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('birthday-wishes');
+    if (saved) setMessages(JSON.parse(saved));
+  }, []);
+
+  function handleSend() {
+    if (!name.trim()) { setError('Please enter your name.'); return; }
+    if (!wish.trim()) { setError('Please write a message.'); return; }
+    setError('');
+    const newMsg = { name: name.trim(), message: wish.trim() };
+    const saved = JSON.parse(localStorage.getItem('birthday-wishes') || '[]');
+    const updated = [...saved, newMsg];
+    localStorage.setItem('birthday-wishes', JSON.stringify(updated));
+    setMessages(updated);
+    setName('');
+    setWish('');
+    setSent(true);
+    setTimeout(() => setSent(false), 3000);
+  }
+
   return (
     <main className="w-full overflow-hidden">
       {/* Hero Section */}
@@ -47,7 +78,7 @@ export default function Home() {
             Happy Birthday!
           </h1>
           <p className="text-2xl md:text-3xl text-yellow-300 mb-8 font-light">
-            To my dearest friend
+            To my dearest friend Kousik
           </p>
           <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">
             A celebration of friendship, laughter, and unforgettable memories.
@@ -72,7 +103,9 @@ export default function Home() {
             ))}
           </div>
 
-          <button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-black px-8 py-4 rounded-full font-bold text-lg hover:shadow-lg hover:shadow-yellow-500/50 transition-all transform hover:scale-105">
+          <button
+            onClick={() => router.push('/celebrate')}
+            className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-black px-8 py-4 rounded-full font-bold text-lg hover:shadow-lg hover:shadow-yellow-500/50 transition-all transform hover:scale-105">
             Celebrate Now
           </button>
         </div>
@@ -185,12 +218,9 @@ export default function Home() {
           </h2>
 
           <div className="space-y-6">
-            {[
-              { name: 'Friend 1', message: 'You make every day brighter. Happy birthday! 🎉' },
-              { name: 'Friend 2', message: 'To the best friend ever. Cheers to you! 🥳' },
-              { name: 'Friend 3', message: 'May your year be filled with happiness and laughter!' },
-              { name: 'Friend 4', message: 'You deserve all the happiness in the world. Happy birthday! 💛' }
-            ].map((msg, idx) => (
+            {messages.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">No wishes yet — be the first to send one! 💛</p>
+            ) : messages.map((msg, idx) => (
               <div
                 key={idx}
                 className="bg-gradient-to-r from-yellow-950 to-black border-l-4 border-yellow-500 p-6 rounded-lg hover:shadow-lg hover:shadow-yellow-500/20 transition-all"
@@ -204,13 +234,42 @@ export default function Home() {
           {/* Add Your Message */}
           <div className="mt-12 bg-gradient-to-r from-black to-yellow-950 border-2 border-yellow-500 rounded-xl p-8">
             <h3 className="text-2xl font-bold text-yellow-400 mb-4">Leave a Message</h3>
-            <textarea
-              className="w-full bg-black border border-yellow-500 rounded-lg p-4 text-white placeholder-gray-600 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-500/20 resize-none"
-              rows={4}
-              placeholder="Share your birthday wishes..."
+
+            {sent && (
+              <div className="mb-4 flex items-center gap-2 bg-yellow-500/10 border border-yellow-500 text-yellow-300 px-4 py-3 rounded-lg">
+                <span className="text-xl">🎉</span> Your wish has been sent!
+              </div>
+            )}
+
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full bg-black border border-yellow-500 rounded-lg p-3 text-white placeholder-gray-600 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-500/20 mb-3"
+              placeholder="Your name"
+              maxLength={40}
             />
-            <button className="mt-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black px-8 py-3 rounded-lg font-bold hover:shadow-lg hover:shadow-yellow-500/50 transition-all transform hover:scale-105">
-              Send Wishes
+
+            <div className="relative">
+              <textarea
+                value={wish}
+                onChange={(e) => { setWish(e.target.value.slice(0, MAX)); setError(''); }}
+                className="w-full bg-black border border-yellow-500 rounded-lg p-4 text-white placeholder-gray-600 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-500/20 resize-none"
+                rows={4}
+                placeholder="Share your birthday wishes..."
+              />
+              <span className={`absolute bottom-3 right-3 text-xs ${wish.length >= MAX ? 'text-red-400' : 'text-gray-500'}`}>
+                {wish.length}/{MAX}
+              </span>
+            </div>
+
+            {error && <p className="mt-2 text-red-400 text-sm">{error}</p>}
+
+            <button
+              onClick={handleSend}
+              className="mt-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black px-8 py-3 rounded-lg font-bold hover:shadow-lg hover:shadow-yellow-500/50 transition-all transform hover:scale-105"
+            >
+              Send Wishes 💛
             </button>
           </div>
         </div>
