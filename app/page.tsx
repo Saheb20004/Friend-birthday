@@ -85,9 +85,8 @@ export default function Home() {
             {/* Image Placeholder */}
             <div className="flex justify-center">
               <div className="relative w-80 h-96 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl shadow-2xl shadow-yellow-500/20 overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-9xl">📸</span>
+                <div className="absolute inset-0">
+                  <Image src="/1.jpg" alt="Kousik" fill className="object-cover object-top" />
                 </div>
                 <div className="absolute inset-0 border-4 border-yellow-300 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </div>
@@ -134,13 +133,16 @@ export default function Home() {
             {[1, 2, 3, 4, 5, 6].map((num) => (
               <div
                 key={num}
-                className="group relative h-64 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-yellow-500/30 transition-all transform hover:scale-105"
+                className="group relative h-64 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-yellow-500/30 transition-all transform hover:scale-105"
               >
+                <Image
+                  src={num === 1 ? '/7.jpg' : `/${num}.jpg`}
+                  alt={`Photo ${num}`}
+                  fill
+                  className={`object-cover ${num === 1 ? 'object-top' : ''}`}
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-6">
                   <span className="text-2xl">Photo {num}</span>
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center text-6xl">
-                  🎂
                 </div>
               </div>
             ))}
